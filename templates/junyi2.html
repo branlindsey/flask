@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Junyi Student Retention Predictor</title>
+  <meta name="description" content="Student Retention Predictor">
+  <meta name="author" content="Brandon Lindsey">
+  <script src="{{ url_for('static', filename='brython.js')}}"></script>
+  <script src="{{ url_for('static', filename='brython_stdlib.js')}}"></script>
+</head>
+
+<body onload="brython()">
+     <script type="text/python" src="{{ url_for('static', filename='brapp.py') }}"></script>
+    
+    <h1>Junyi Student Retetion Predictor</h1>
+    <p>This app will give the probability that a student will use the site in the next month!</p>
+    <p>Please enter some information about the student below!</p>
+
+    <div>
+        <!-- These have id's so that later we can pull out data using js. -->
+        <span>a:</span> <input id="a"></input>
+        <span>b:</span> <input id="b"></input>
+        <span>c:</span> <input id="c"></input>
+        <span>d:</span> <input id="d"></input>
+    </div>
+
+    <div>
+        <button type="button">Predict!</button>
+    </div>
+
+    <div>
+        <!-- The span has an id so that later we can fill in the solution
+             using js. -->
+        <p> There is  <span id="solution"></span> % chance that this student will be there next month. </p>
+    </div>
+
+</body>
+</html>

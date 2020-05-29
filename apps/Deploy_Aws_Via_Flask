@@ -1,0 +1,145 @@
+# Deploy a Flask application to AWS
+
+## Part 1: Create an EC2 instance
+
+### Step 1: Choose an Amazon Machine Image
+* Find `Ubuntu Server 16.04 LTS (HVM), SSD Volume Type`
+* Click `Select`
+
+### Step 2: Choose an Instance Type
+* Confirm that `t2.micro` is the selected instance type
+* Click `Next: Configure Instance Details`
+
+### Step 3: Configure Instance
+* Click `Protect against accidental termination`
+* Check `T2 Unlimited: Enable` to ensure adequate CPU resources
+* Click `Next: Add Storage`
+
+### Step 4: Add Storage
+* Change the default volume size from 8 GB to 30 GB
+* Click `Next: Add Tags`
+
+### Step 5: Add Tags
+* Add a tag with `Key` set to `Name` and `Value` set to `web`
+* Click `Next: Configure Security Group`
+
+### Step 6: Configure Security Group
+* Click Add Rule
+* Choose HTTP from the dropdown.
+* Click `Review and Launch`
+
+### Step 7: Review
+
+#### Review AMI Details
+* Confirm that the operating system is `Ubuntu Server 16.04 LTS`
+
+#### Review Instance Type
+* Confirm that the instance type is `t2.micro`
+
+#### Review Security Groups
+* Confirm that SSH is allowed on Port 22
+* Confirm that HTTP is allowed on Port 80
+
+#### Review Instance Details
+* Confirm that Termination Protection = Yes
+* Confirm that T2 Unlimited = Enabled
+
+#### Begin Launch Sequence
+* Click `Launch`
+
+### Final Step: Download Key Pair
+* Choose `Create a new key pair`
+* Set the `Key pair name` to `web` (all lowercase)
+* Click `Download Key Pair`
+
+#### Prepare Key Pair
+* Open a Terminal
+* Move to SSH directory: `mv ~/Downloads/web.pem ~/.ssh/`
+* Set read-only permissions: `chmod 400 ~/.ssh/web.pem`
+
+#### Launch Instance
+* Click `Launch Instances`
+* Click on the instance ID link (e.g. `i-0f44a8d9335d7d358`) to the right of `The following instance launches have been initiated`
+* Copy your instance's `IPv4 Public IP` (e.g. `34.101.102.103`) to the clipboard.
+
+## Part 2: Configure EC2 Instance
+
+### Add instance to SSH configuration
+* `atom ~/.ssh/config` (or use your favorite editor)
+* Add a new configuration block (replace `34.101.102.103` with the actual address):
+
+```
+# Web Server
+Host web
+  HostName 34.101.102.103
+  User ubuntu
+  IdentityFile ~/.ssh/web.pem
+```
+
+### Connect to instance using SSH
+* Connect using the Host alias that you created: `ssh web`
+* The first time you connect, you'll need to answer `yes` to confirm that it's OK to connect to an unfamiliar server.
+
+### Install software
+* Run all of the following commands on the _remote_ EC2 instance, not on your computer.
+
+#### Set up package manager
+`sudo apt update`
+
+#### Install web server software
+`sudo apt install nginx`
+
+#### Install Anaconda
+```
+# Create Anaconda directory
+mkdir ~/anaconda
+
+# Download Anaconda installer
+wget -S -T 10 -t 5 https://repo.continuum.io/archive/Anaconda3-5.1.0-Linux-x86_64.sh -O ~/anaconda/anaconda.sh
+
+# Install Anaconda
+bash ~/anaconda/anaconda.sh -u -b -p $HOME/anaconda
+
+# Delete Anaconda installer
+rm ~/anaconda/anaconda.sh
+
+# Add Anaconda to current session's PATH
+export PATH=$HOME/anaconda/bin:$PATH
+
+# Add Anaconda to PATH for future sessions via .bashrc
+echo -e "\n\n# Anaconda" >> $HOME/.bashrc
+echo "export PATH=$HOME/anaconda/bin:$PATH" >> $HOME/.bashrc
+```
+
+## Part 3: Install Flask App
+
+### Clone your code from GitHub
+
+* Use the `git clone https://github.com/<username>/<reponame>` command.
+* Enter your GitHub username.
+* Enter your GitHub password.
+
+### Run your Flask application on the remote server
+
+* `tmux`
+* `cd reponame`
+* Change into the app directory.
+* Run the Flask app as you would locally.
+
+## Part 4: Connect `nginx` to `Flask`
+
+* Edit `/etc/nginx/sites-available/default`.
+* Comment out the default behavior for `location /` and add a `proxy_pass` directive.
+
+```
+location / {
+        # Default behavior
+        # First attempt to serve request as file, then
+        # as directory, then fall back to displaying a 404.
+        # try_files $uri $uri/ =404;
+
+        # New behavior
+        # Refer all traffic to Flask on Port 5000
+        proxy_pass http://0.0.0.0:5000/;
+    }
+```
